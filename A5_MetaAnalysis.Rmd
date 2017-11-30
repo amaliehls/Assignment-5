@@ -1,0 +1,70 @@
+---
+title: "Assignment 5 - Meta-analysis of pitch in schizophrenia"
+author: "Riccardo Fusaroli"
+date: "3/7/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+setwd("~/Desktop/R Saves Semester 3/Assignment 5")
+Data = read.csv("~/Desktop/R Saves Semester 3/Assignment 5/Data.csv", sep=";")
+library(crqa); library(tseriesChaos); library(nonlinearTseries); library(SparseM); library(lme4); library(dplyr); library(lmerTest); library(MuMIn); library(caret); library(pROC); library(groupdata2); library(ggplot2); library(gridExtra)
+library(stringr)
+
+#By adding 1Istudy we allow the studies to have different intercept - because they might not tap into the same population
+#PitchSD is the SD of each subject - who each have many datapoints
+#PitchSDsd is the SD of all these SD's
+#The same for mean
+#To make lmer run check.nobs.vs.nlev = "ignore" and check.nobs.vs.nRe ="ignore"
+#To get the effect sizes, we have a distribution of pitch mean controls and a distribution of pitch mean scizophrenia, the effect size is the difference between the two disbrution - in either absolute terms (like 100Hz) but that is hard to interpret if one of them e.g. had more women, standardized effect sizes is scaled - Cohen's d the unit is SD, for each study we want the cohen's d - standardized beta, Cohen's d is the m1 - m2 / pooled SD, the pooled SD can be calculated with an R package, escalc("SMD",n1i = SAmpleSizeControl,n2i=SSsch, m1i, m2i, sd1i, sd2i,data) yi is the cohen'd, vi is the variance of the cohen's d, we need to put that into lmer, methaphor package, can be plotted as forest plot, model1 = rma(yi,vi,data, slab='study') slab is the random effect which is study, forest(m1), summary(m1) gives us tau^2 - how much variance between studies, I^2 - % of tau^2 that could not be reduced to within study sampling uncertainty, if efects sizes are within each other's confidence interval I^2 will be close to 0 - if it is close to 100 is means that the studies' effect sizes are not captured by ech other's confidence interval 
+
+```
+
+# Building on the shoulders of giants: meta-analysis
+
+## Questions to be answered
+
+1. What is the current evidence for distinctive patterns of pitch mean and pitch sd in schizophrenia? Report how many papers report quantitative estimates, your method to analyze them, the estimated effect size of the difference (mean effect size and standard error for pitch mean, same for pitch sd) and forest plots representing it. 
+
+```{r}
+#Calculating cohen's d, yi and vi
+pitchmean = escalc("SMD",n1i = SampleSizeContros,n2i = SampleSizeSchizo, m1i = PitchMeanControls, m2i = PitchMeanSchizo, sd1i = PitchMeanControlsSD, sd2i = PitchMeanSchizoSD, data = Data)
+
+pitchsd = escalc("SMD",n1i = SampleSizeContros,n2i = SampleSizeSchizo, m1i = PitchSDControls, m2i = PitchSDSchizo, sd1i = PitchSDControlsSD, sd2i = PitchSDSchizoSD, data = Data)
+
+#Mixed effects model with d's variance as weight using lmer
+model_mean_lmer = lmer(yi~1+(1|Article),weights = 1/vi,data=pitchmean, control=lmerControl(check.nobs.vs.nlev="ignore", check.nobs.vs.nRE="ignore"))
+summary(model_mean_lmer)
+
+model_sd_lmer = lmer(yi~1+(1|Article),weights = 1/vi,data=pitchsd, control=lmerControl(check.nobs.vs.nlev="ignore", check.nobs.vs.nRE="ignore"))
+summary(model_mean_lmer)
+
+#Model using rma, gives us one estimate for all the studies combined and take into account weigting both variance (connected to how many observations) and pooling (pulling the studies towards the centre)
+model_mean_rma = rma(yi,vi,data = pitchmean,slab = Article)
+forest(model_mean_rma)
+
+model_sd_rma = rma(yi,vi,data = pitchsd,slab = Article)
+forest(model_sd_rma)
+
+
+
+```
+
+
+2. Do the results match your own analysis from Assignment 3? If you add your results to the meta-analysis, do the estimated effect sizes change? Report the new estimates and the new forest plots.
+
+3. Assess the quality of the literature: report and comment on heterogeneity of the studies (tau, I2), on publication bias (funnel plot), and on influential studies.
+
+## Tips on the process to follow:
+
+- Download the data on all published articles analyzing pitch in schizophrenia: https://www.dropbox.com/s/pmgw8wzc308so1p/Data.csv?dl=0
+- Following the procedure in the slides calculate effect size and standard error of the effect size per each study. N.B. we focus on pitch mean and pitch standard deviation.
+ . first try using lmer (to connect to what you know of mixed effects models)
+ . then use rma() (to get some juicy additional statistics)
+
+- Build a forest plot of the results (forest(model))
+ 
+- Go back to Assignment 3, add your own study to the data table, and re-run meta-analysis. Do the results change?
+
+- Now look at the output of rma() and check tau and I2
