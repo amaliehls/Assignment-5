@@ -44,17 +44,68 @@ summary(model_mean_lmer)
 model_mean_rma = rma(yi,vi,data = pitchmean,slab = Article)
 forest(model_mean_rma)
 
-model_sd_rma = rma(yi,vi,data = pitchsd,slab = Article)
+model_sd_rma = rma(yi,vi,data = pitchsd[-9,],slab = Article)
 forest(model_sd_rma)
-
-
 
 ```
 
 
 2. Do the results match your own analysis from Assignment 3? If you add your results to the meta-analysis, do the estimated effect sizes change? Report the new estimates and the new forest plots.
 
+```{r}
+#Import dataset from assignment 3
+df_final = read.csv("~/Desktop/R Saves Semester 3/Assignment 3/df_final.dms")
+
+#Calculate sample size, mean etc. for both diagnoses
+length(unique(df_final$Subject[df_final$diagnosis==0]))
+length(unique(df_final$Subject[df_final$diagnosis==1]))
+mean(df_final$mean[df_final$diagnosis=="0"])
+mean(df_final$mean[df_final$diagnosis=="1"])
+sd(df_final$mean[df_final$diagnosis=="0"])
+sd(df_final$mean[df_final$diagnosis=="1"])
+mean(df_final$sd[df_final$diagnosis=="0"])
+mean(df_final$sd[df_final$diagnosis=="1"])
+sd(df_final$sd[df_final$diagnosis=="0"])
+sd(df_final$sd[df_final$diagnosis=="1"])
+
+#create a dataset with the values found
+Assignment3 = data.frame(Article = "Assignment3", Year = "2017", SampleSizeSchizo = 58, SampleSizeContros = 53, PitchMeanControls = 154.5127 , PitchMeanControlsSD = 52.38542 , PitchMeanSchizo =  147.0784, PitchMeanSchizoSD =50.43648, PitchSDControls = 21.65359  , PitchSDControlsSD = 25.44391 , PitchSDSchizo = 24.93085 , PitchSDSchizoSD = 17.95011)
+
+#rbind the two datasets
+Data_all = rbind(Data,Assignment3)
+
+#Do the same with our Assignment 3 data included
+
+#Calculating cohen's d, yi and vi
+pitchmean_all = escalc("SMD",n1i = SampleSizeContros,n2i = SampleSizeSchizo, m1i = PitchMeanControls, m2i = PitchMeanSchizo, sd1i = PitchMeanControlsSD, sd2i = PitchMeanSchizoSD, data = Data_all)
+
+pitchsd_all = escalc("SMD",n1i = SampleSizeContros,n2i = SampleSizeSchizo, m1i = PitchSDControls, m2i = PitchSDSchizo, sd1i = PitchSDControlsSD, sd2i = PitchSDSchizoSD, data = Data_all)
+
+#Mixed effects model with d's variance as weight using lmer
+model_mean_lmer_all = lmer(yi~1+(1|Article),weights = 1/vi,data=pitchmean_all, control=lmerControl(check.nobs.vs.nlev="ignore", check.nobs.vs.nRE="ignore"))
+summary(model_mean_lmer_all)
+
+model_sd_lmer_all = lmer(yi~1+(1|Article),weights = 1/vi,data=pitchsd_all, control=lmerControl(check.nobs.vs.nlev="ignore", check.nobs.vs.nRE="ignore"))
+summary(model_mean_lmer_all)
+
+#Model using rma, gives us one estimate for all the studies combined and take into account weigting both variance (connected to how many observations) and pooling (pulling the studies towards the centre)
+model_mean_rma_all = rma(yi,vi,data = pitchmean_all,slab = Article)
+summary(model_mean_rma_all)
+forest(model_mean_rma_all)
+
+model_sd_rma_all = rma(yi,vi,data = pitchsd_all[-9,],slab = Article)
+summary(model_sd_rma_all)
+forest(model_sd_rma_all)
+
+```
+
 3. Assess the quality of the literature: report and comment on heterogeneity of the studies (tau, I2), on publication bias (funnel plot), and on influential studies.
+
+```{r}
+
+
+```
+
 
 ## Tips on the process to follow:
 
