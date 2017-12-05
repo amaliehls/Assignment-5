@@ -86,7 +86,7 @@ model_mean_lmer_all = lmer(yi~1+(1|Article),weights = 1/vi,data=pitchmean_all, c
 summary(model_mean_lmer_all)
 
 model_sd_lmer_all = lmer(yi~1+(1|Article),weights = 1/vi,data=pitchsd_all, control=lmerControl(check.nobs.vs.nlev="ignore", check.nobs.vs.nRE="ignore"))
-summary(model_mean_lmer_all)
+summary(model_sd_lmer_all)
 
 #Model using rma, gives us one estimate for all the studies combined and take into account weigting both variance (connected to how many observations) and pooling (pulling the studies towards the centre)
 model_mean_rma_all = rma(yi,vi,data = pitchmean_all,slab = Article)
