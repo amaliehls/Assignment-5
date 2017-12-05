@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 setwd("~/Desktop/R Saves Semester 3/Assignment 5")
 Data = read.csv("~/Desktop/R Saves Semester 3/Assignment 5/Data.csv", sep=";")
 library(crqa); library(tseriesChaos); library(nonlinearTseries); library(SparseM); library(lme4); library(dplyr); library(lmerTest); library(MuMIn); library(caret); library(pROC); library(groupdata2); library(ggplot2); library(gridExtra)
-library(stringr)
+library(stringr); library(metafor)
 
 #By adding 1Istudy we allow the studies to have different intercept - because they might not tap into the same population
 #PitchSD is the SD of each subject - who each have many datapoints
@@ -93,16 +93,46 @@ model_mean_rma_all = rma(yi,vi,data = pitchmean_all,slab = Article)
 summary(model_mean_rma_all)
 forest(model_mean_rma_all)
 
-model_sd_rma_all = rma(yi,vi,data = pitchsd_all[-9,],slab = Article)
+model_sd_rma_all = rma(yi,vi,data = pitchsd_all,slab = Article)
 summary(model_sd_rma_all)
 forest(model_sd_rma_all)
+
 
 ```
 
 3. Assess the quality of the literature: report and comment on heterogeneity of the studies (tau, I2), on publication bias (funnel plot), and on influential studies.
 
 ```{r}
+#Test for influential studies
+inf_mean = influence(model_mean_rma_all)
+print(inf_mean)
+plot(inf_mean)
 
+inf_sd = influence(model_sd_rma_all)
+print(inf_sd)
+plot(inf_sd)
+
+#Funnel plot and regtest to check if effect size is correlated with SE
+funnel(model_mean_rma_all)
+funnel(model_sd_rma_all)
+regtest(model_mean_rma_all)
+regtest(model_sd_rma_all)
+
+#Removing Martinez in mean because that study is influential
+model_mean_rma_all_withoutoutlier = rma(yi,vi,data = pitchmean_all[-10,],slab = Article)
+summary(model_mean_rma_all_withoutoutlier)
+
+#Removing Cohen in sd because that study is influential
+model_sd_rma_all_withoutoutlier = rma(yi,vi,data = pitchsd_all[-9,],slab = Article)
+summary(model_sd_rma_all_withoutoutlier)
+
+#Forest plots without the outliers
+forest(model_mean_rma_all_withoutoutlier)
+forest(model_sd_rma_all_withoutoutlier)
+
+#Funnel plots without the outliers
+funnel(model_sd_rma_all_withoutoutlier)
+funnel(model_mean_rma_all_withoutoutlier)
 
 ```
 
