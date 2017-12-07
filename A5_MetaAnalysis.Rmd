@@ -133,6 +133,8 @@ forest(model_sd_rma_all_withoutoutlier)
 #Funnel plots without the outliers
 funnel(model_sd_rma_all_withoutoutlier)
 funnel(model_mean_rma_all_withoutoutlier)
+regtest(model_sd_rma_all_withoutoutlier)
+regtest(model_mean_rma_all_withoutoutlier)
 
 ```
 
